@@ -5,8 +5,8 @@ end
 -- Extract components of an advanced search string. Assumes searchString is an
 -- advanced search.
 function Auctionator.Search.SplitAdvancedSearch(searchString)
-  local queryString, filterKey, minItemLevel, maxItemLevel, minLevel, maxLevel =
-    strsplit( Auctionator.Constants.AdvancedSearchDivider, searchString )
+  local queryString, filterKey, minItemLevel, maxItemLevel, minLevel, maxLevel,
+    minCraftLevel, maxCraftLevel = strsplit( Auctionator.Constants.AdvancedSearchDivider, searchString )
 
   -- A nil queryString causes a disconnect if searched for, but an empty one
   -- doesn't
@@ -18,6 +18,9 @@ function Auctionator.Search.SplitAdvancedSearch(searchString)
   maxLevel = tonumber( maxLevel )
   minItemLevel = tonumber( minItemLevel )
   maxItemLevel = tonumber( maxItemLevel )
+
+  minCraftLevel = tonumber( minCraftLevel )
+  maxCraftLevel = tonumber( maxCraftLevel )
 
   if minLevel == 0 then
     minLevel = nil
@@ -35,6 +38,14 @@ function Auctionator.Search.SplitAdvancedSearch(searchString)
     maxItemLevel = nil
   end
 
+  if minCraftLevel == 0 then
+    minCraftLevel = nil
+  end
+
+  if maxCraftLevel == 0 then
+    maxCraftLevel = nil
+  end
+
   return {
     queryString = queryString,
     filterKey = filterKey,
@@ -42,6 +53,8 @@ function Auctionator.Search.SplitAdvancedSearch(searchString)
     maxLevel = maxLevel,
     minItemLevel = minItemLevel,
     maxItemLevel = maxItemLevel,
+    minCraftLevel = minCraftLevel,
+    maxCraftLevel = maxCraftLevel,
   }
 end
 
@@ -73,6 +86,14 @@ local function ItemLevelRange(splitSearch)
   ) .. separator
 end
 
+local function CraftLevelRange(splitSearch)
+  return RangeOptionString(
+    "clvl",
+    splitSearch.minCraftLevel,
+    splitSearch.maxCraftLevel
+  ) .. separator
+end
+
 local function LevelRange(splitSearch)
   return RangeOptionString(
     "lvl",
@@ -90,6 +111,7 @@ function Auctionator.Search.PrettifySearchString(searchString)
       .. FilterKey(splitSearch)
       .. LevelRange(splitSearch)
       .. ItemLevelRange(splitSearch)
+      .. CraftLevelRange(splitSearch)
       .. "]"
 
     -- Clean up string removing empty stuff

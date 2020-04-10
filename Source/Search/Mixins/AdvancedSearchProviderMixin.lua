@@ -5,6 +5,7 @@ local ADVANCED_SEARCH_EVENTS = {
   "AUCTION_HOUSE_BROWSE_RESULTS_ADDED",
   "AUCTION_HOUSE_BROWSE_FAILURE",
   "ITEM_KEY_ITEM_INFO_RECEIVED",
+  "EXTRA_BROWSE_INFO_RECEIVED",
 }
 
 local function ExtractExactSearch(queryString)
@@ -36,6 +37,8 @@ local function ParseAdvancedSearch(searchString)
     extraFilters = {
       minItemLevel = parsed.minItemLevel,
       maxItemLevel = parsed.maxItemLevel,
+      minCraftLevel = parsed.minCraftLevel,
+      maxCraftLevel = parsed.maxCraftLevel,
       exactSearch = ExtractExactSearch(parsed.queryString),
     }
   }
@@ -73,6 +76,7 @@ function AuctionatorAdvancedSearchProviderMixin:GetSearchProvider()
     C_AuctionHouse.SendBrowseQuery(searchTerm.query)
     self.currentFilter = searchTerm.extraFilters
     self.itemKeyInfoQueue = {}
+    self.extraBrowseInfoQueue = {}
   end
 end
 
@@ -80,7 +84,9 @@ function AuctionatorAdvancedSearchProviderMixin:HasCompleteTermResults()
   Auctionator.Debug.Message("AuctionatorAdvancedSearchProviderMixin:HasCompleteTermResults()")
 
   --Loaded all the terms from API, and we have filtered every item
-  return C_AuctionHouse.HasFullBrowseResults() and #(self.itemKeyInfoQueue) == 0
+  return C_AuctionHouse.HasFullBrowseResults() and
+         #(self.itemKeyInfoQueue) == 0 and
+         #(self.extraBrowseInfoQueue) == 0
 end
 
 function AuctionatorAdvancedSearchProviderMixin:OnSearchEventReceived(eventName, ...)
@@ -92,6 +98,9 @@ function AuctionatorAdvancedSearchProviderMixin:OnSearchEventReceived(eventName,
     self:ProcessSearchResults(...)
   elseif eventName == "ITEM_KEY_ITEM_INFO_RECEIVED" then
     self:ProcessItemKeyInfo(...)
+  elseif eventName == "EXTRA_BROWSE_INFO_RECEIVED" then
+    print("here")
+    self:ProcessExtraBrowseInfo(...)
   elseif eventName == "AUCTION_HOUSE_BROWSE_FAILURE" then
     AuctionHouseFrame.BrowseResultsFrame.ItemList:SetCustomError(
       RED_FONT_COLOR:WrapTextInColorCode(ERR_AUCTION_DATABASE_ERROR)
@@ -108,7 +117,8 @@ function AuctionatorAdvancedSearchProviderMixin:ProcessSearchResults(addedResult
     -- Run filter checks on every item key. Some might not be added to the
     -- results yet, but when the relevant information arrives in an event
     if self:FilterByItemLevel(addedResults[index].itemKey) and
-       self:FilterByExact(addedResults[index]) then
+       self:FilterByExact(addedResults[index]) and
+       self:FilterByCraftLevel(addedResults[index]) then
       table.insert(results, addedResults[index])
     end
   end
@@ -130,7 +140,8 @@ function AuctionatorAdvancedSearchProviderMixin:ProcessItemKeyInfo(itemID)
 
       --Only exact search uses this info, and the event won't have been queued
       --otherwise.
-      if self:ExactMatchCheck(itemKeyInfo) then
+      if self:ExactMatchCheck(itemKeyInfo) and
+         self:FilterByCraftLevel(browseResult) then
         self:AddResults({browseResult})
       else
       --Post empty results, so the mixin supplying it runs
@@ -138,8 +149,32 @@ function AuctionatorAdvancedSearchProviderMixin:ProcessItemKeyInfo(itemID)
         self:AddResults({})
       end
 
-      --Only one new result per event
-      break
+      return
+    end
+  end
+end
+
+function AuctionatorAdvancedSearchProviderMixin:ProcessExtraBrowseInfo(itemID)
+  Auctionator.Debug.Message("AuctionatorAdvancedSearchProviderMixin:ProcessExtraBrowseInfo. Waiting", #self.extraBrowseInfoQueue)
+  --Event for missing info received about itemID.
+  for index, browseResult in ipairs(self.extraBrowseInfoQueue) do
+    if browseResult.itemKey.itemID == itemID then
+      local extraBrowseInfo = C_AuctionHouse.GetExtraBrowseInfo(browseResult.itemKey)
+
+      Auctionator.Debug.Message("AuctionatorAdvancedSearchProviderMixin:ProcessExtraBrowseInfo", extraBrowseInfo)
+
+      --Remove key from list of those with missing info
+      table.remove(self.extraBrowseInfoQueue, index)
+
+      if self:CraftLevelCheck(extraBrowseInfo) then
+        self:AddResults({browseResult})
+      else
+      --Post empty results, so the mixin supplying it runs
+      --self:HasCompleteTermResults() and can see if the search is complete
+        self:AddResults({})
+      end
+
+      return
     end
   end
 end
@@ -187,6 +222,49 @@ end
 
 function AuctionatorAdvancedSearchProviderMixin:ExactMatchCheck(itemKeyInfo)
   return string.lower(itemKeyInfo.itemName) == string.lower(self.currentFilter.exactSearch)
+end
+
+function AuctionatorAdvancedSearchProviderMixin:FilterByCraftLevel(browseResult)
+  local itemKey = browseResult.itemKey
+
+  if self:HasCraftLevelFilter() then
+    local extraBrowseInfo = C_AuctionHouse.GetExtraBrowseInfo(itemKey)
+
+    if extraBrowseInfo == nil then
+      Auctionator.Debug.Message("AuctionatorAdvancedSearchProviderMixin:FilterByCraftLevel Missing extraBrowseInfo")
+
+      --Put key in the queue for completing filtering later in an
+      --EXTRA_BROWSE_INFO_RECEIVED event
+      table.insert(self.extraBrowseInfoQueue, browseResult)
+
+      return false
+    else
+      Auctionator.Debug.Message("AuctionatorAdvancedSearchProviderMixin:FilterByCraftLevel Got extraBrowseInfo", extraBrowseInfo)
+      Auctionator.Debug.Message("checked", self:CraftLevelCheck(extraBrowseInfo))
+
+      return self:CraftLevelCheck(extraBrowseInfo)
+    end
+  end
+
+  return true
+end
+
+function AuctionatorAdvancedSearchProviderMixin:HasCraftLevelFilter()
+  return self.currentFilter.minCraftLevel ~= nil or
+         self.currentFilter.maxCraftLevel ~= nil
+end
+
+function AuctionatorAdvancedSearchProviderMixin:CraftLevelCheck(extraBrowseInfoNum)
+  return
+    (
+      --Minimum item level check
+      self.currentFilter.minCraftLevel == nil or
+      self.currentFilter.minCraftLevel <= extraBrowseInfoNum
+    ) and (
+      --Maximum item level check
+      self.currentFilter.maxCraftLevel == nil or
+      self.currentFilter.maxCraftLevel >= extraBrowseInfoNum
+    )
 end
 
 function AuctionatorAdvancedSearchProviderMixin:RegisterProviderEvents()
