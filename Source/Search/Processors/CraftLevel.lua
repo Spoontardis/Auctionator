@@ -24,7 +24,8 @@ function Auctionator.Search.CraftLevelMixin:Update()
   end
 
   if #self.itemInfo > 0 and self.itemInfo[12] ~= LE_ITEM_CLASS_GEM and
-    self.itemInfo[12] ~= LE_ITEM_CLASS_ITEM_ENHANCEMENT then
+    self.itemInfo[12] ~= LE_ITEM_CLASS_ITEM_ENHANCEMENT and
+    self.itemInfo[12] ~= LE_ITEM_CLASS_CONSUMABLE then
     self.wrongItemType = true
     return
   end
