@@ -10,7 +10,7 @@ local function HasItemLevel(itemKey)
   return itemKey.itemLevel ~= nil and itemKey.itemLevel ~= 0
 end
 
-function Auctionator.Search.ItemLevelMixin:ItemLevelFilterSatisfied(itemKey)
+function Auctionator.Search.ItemLevelMixin:LevelFilterSatisfied(itemKey)
   return
     (
       --Minimum item level check
@@ -25,5 +25,5 @@ end
 
 function Auctionator.Search.ItemLevelMixin:GetResult()
   local itemKey = self.browseResult.itemKey
-  return (not HasItemLevel(itemKey)) or self:ItemLevelFilterSatisfied(itemKey)
+  return (not HasItemLevel(itemKey)) or self:LevelFilterSatisfied(itemKey)
 end
