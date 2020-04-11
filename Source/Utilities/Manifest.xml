@@ -23,6 +23,4 @@
   <Script file="TableKeys.lua"/>
 
   <Script file="Sorting.lua" />
-
-  <Script file="InitInstance.lua"/>
 </Ui>

@@ -23,15 +23,18 @@ function Auctionator.Search.CraftLevelMixin:Update()
     return
   end
 
-  if #self.itemInfo > 0 and self.itemInfo[12] ~= LE_ITEM_CLASS_GEM and
-    self.itemInfo[12] ~= LE_ITEM_CLASS_ITEM_ENHANCEMENT and
-    self.itemInfo[12] ~= LE_ITEM_CLASS_CONSUMABLE then
+  if #self.itemInfo > 0 and
+      self.itemInfo[12] ~= LE_ITEM_CLASS_GEM and
+      self.itemInfo[12] ~= LE_ITEM_CLASS_ITEM_ENHANCEMENT and
+      self.itemInfo[12] ~= LE_ITEM_CLASS_CONSUMABLE then
+
     self.wrongItemType = true
     return
   end
 
   if self.extraInfo == nil then
-    self.extraInfo = C_AuctionHouse.GetExtraBrowseInfo(itemKey)
+    local extraInfo = {C_AuctionHouse.GetExtraBrowseInfo(itemKey)}
+    self.extraInfo = extraInfo[1]
   end
 end
 

@@ -51,10 +51,31 @@ end
 
 local function GetProcessors(browseResult, filter)
   return {
-    Auctionator.Utilities.InitInstance(Auctionator.Search.ItemLevelMixin, browseResult, filter.itemLevel or {}),
-    Auctionator.Utilities.InitInstance(Auctionator.Search.ExactMixin, browseResult, filter.exactSearch),
-    Auctionator.Utilities.InitInstance(Auctionator.Search.CraftLevelMixin, browseResult, filter.craftLevel or {}),
+    CreateAndInitFromMixin(Auctionator.Search.ItemLevelMixin, browseResult, filter.itemLevel or {}),
+    CreateAndInitFromMixin(Auctionator.Search.ExactMixin, browseResult, filter.exactSearch),
+    CreateAndInitFromMixin(Auctionator.Search.CraftLevelMixin, browseResult, filter.craftLevel or {}),
   }
+end
+
+local function GetResults(allProcessors)
+  local results = {}
+  local offset = 0
+
+  for index = 1, #allProcessors do
+    local p = allProcessors[index - offset]
+    if p:IsComplete() then
+      p.testItem:MergeResult(p:GetResult())
+
+      if p.testItem:IsReady() and p.testItem.result then
+        table.insert(results, p.browseResult)
+      end
+
+      table.remove(allProcessors, index-offset)
+      offset = offset + 1
+    end
+  end
+
+  return results
 end
 
 function AuctionatorAdvancedSearchProviderMixin:CreateSearchTerm(term)
@@ -107,63 +128,36 @@ function AuctionatorAdvancedSearchProviderMixin:OnSearchEventReceived(eventName,
       RED_FONT_COLOR:WrapTextInColorCode(ERR_AUCTION_DATABASE_ERROR)
     )
   else
-    self:ProcessProcessors(eventName, ...)
+    self:ProcessorsEvents(eventName, ...)
   end
 end
 
-function AuctionatorAdvancedSearchProviderMixin:ProcessProcessors(eventName, ...)
+function AuctionatorAdvancedSearchProviderMixin:ProcessorsEvents(eventName, ...)
   Auctionator.Debug.Message("AuctionatorAdvancedSearchProviderMixin:ProcessProcessors", eventName)
-  local allOthersComplete = true
-  local results = {}
-  for _, processorInfo in ipairs(self.allProcessors) do
-    local allComplete = true
-    local result = true
-    for _, processor in ipairs(processorInfo.processors) do
-      processor:OnFilterEventReceived(eventName, ...)
-      allComplete = processor:IsComplete() and allComplete
-      if allComplete then
-        result = result and processor:GetResult()
-      end
+
+  for _, p in ipairs(self.allProcessors) do
+    if p then
+      p:OnFilterEventReceived(eventName, ...)
     end
-    if allComplete and result then
-      table.insert(results, processorInfo.browseResult)
-    end
-    allOthersComplete = allOthersComplete and allComplete
   end
-  if allOthersComplete then
-    self.allProcessors = {}
-  end
+
+  local results = GetResults(self.allProcessors)
   self:AddResults(results)
 end
 
 function AuctionatorAdvancedSearchProviderMixin:ProcessSearchResults(addedResults)
   Auctionator.Debug.Message("AuctionatorAdvancedSearchProviderMixin:ProcessSearchResults()")
-
-  local results = {}
-
   for index = 1, #addedResults do
-    local browseResult = addedResults[index]
-    local processors = GetProcessors(browseResult, self.currentFilter)
-    local incomplete = {}
-    local checkValue = true
-    for _, processor in ipairs(processors) do
-      if not processor:IsComplete() then
-        table.insert(incomplete, processor)
-      else
-        checkValue = checkValue and processor:GetResult()
-      end
-    end
-
-    if #incomplete > 0 then
-      table.insert(self.allProcessors, {
-        browseResult = browseResult,
-        processors = incomplete
-      })
-    elseif checkValue then
-      table.insert(results, browseResult)
+    local testItem = CreateAndInitFromMixin(
+      Auctionator.Search.TestItemMixin,
+      addedResults[index]
+    )
+    for _, p in ipairs(GetProcessors(testItem, self.currentFilter)) do
+      table.insert(self.allProcessors, p)
     end
   end
 
+  local results = GetResults(self.allProcessors)
   self:AddResults(results)
 end
 

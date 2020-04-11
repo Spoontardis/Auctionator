@@ -1,8 +1,9 @@
 Auctionator.Search.FilterProcessorMixin = {}
 
--- Derive
-function Auctionator.Search.FilterProcessorMixin:Init(browseResult, filter)
-  self.browseResult = browseResult
+function Auctionator.Search.FilterProcessorMixin:Init(testItem, filter)
+  self.testItem = testItem
+  self.testItem:AddWaiting()
+  self.browseResult = testItem.browseResult
   self.filter = filter
   self:Update()
 end

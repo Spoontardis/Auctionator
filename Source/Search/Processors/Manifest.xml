@@ -1,4 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
+  <Script file="TestItem.lua"/>
   <Script file="FilterProcessor.lua"/>
   <Script file="ItemLevel.lua"/>
   <Script file="Exact.lua"/>
