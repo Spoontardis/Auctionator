@@ -33,8 +33,7 @@ function Auctionator.Search.CraftLevelMixin:Update()
   end
 
   if self.extraInfo == nil then
-    local extraInfo = {C_AuctionHouse.GetExtraBrowseInfo(itemKey)}
-    self.extraInfo = extraInfo[1]
+    self.extraInfo = C_AuctionHouse.GetExtraBrowseInfo(itemKey)
   end
 end
 
