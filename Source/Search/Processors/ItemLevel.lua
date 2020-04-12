@@ -1,7 +1,7 @@
-Auctionator.Search.ItemLevelMixin = CreateFromMixins(Auctionator.Search.FilterProcessorMixin)
+Auctionator.Search.Processors.ItemLevelMixin = CreateFromMixins(Auctionator.Search.Processors.ProcessorMixin)
 
 
-function Auctionator.Search.ItemLevelMixin:IsComplete()
+function Auctionator.Search.Processors.ItemLevelMixin:IsComplete()
   return true
 end
 
@@ -10,7 +10,7 @@ local function HasItemLevel(itemKey)
   return itemKey.itemLevel ~= nil and itemKey.itemLevel ~= 0
 end
 
-function Auctionator.Search.ItemLevelMixin:LevelFilterSatisfied(itemKey)
+function Auctionator.Search.Processors.ItemLevelMixin:LevelFilterSatisfied(itemKey)
   return
     (
       --Minimum item level check
@@ -23,7 +23,7 @@ function Auctionator.Search.ItemLevelMixin:LevelFilterSatisfied(itemKey)
     )
 end
 
-function Auctionator.Search.ItemLevelMixin:GetResult()
+function Auctionator.Search.Processors.ItemLevelMixin:GetResult()
   local itemKey = self.browseResult.itemKey
   return (not HasItemLevel(itemKey)) or self:LevelFilterSatisfied(itemKey)
 end

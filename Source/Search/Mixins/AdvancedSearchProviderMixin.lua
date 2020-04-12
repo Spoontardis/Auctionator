@@ -44,16 +44,21 @@ local function ParseAdvancedSearch(searchString)
         min = parsed.minCraftLevel,
         max = parsed.maxCraftLevel,
       },
+      priceRange = {
+        min = parsed.minPrice,
+        max = parsed.maxPrice,
+      },
       exactSearch = ExtractExactSearch(parsed.queryString),
     }
   }
 end
 
-local function GetProcessors(browseResult, filter)
+local function GetProcessors(testItem, filter)
   return {
-    CreateAndInitFromMixin(Auctionator.Search.ItemLevelMixin, browseResult, filter.itemLevel or {}),
-    CreateAndInitFromMixin(Auctionator.Search.ExactMixin, browseResult, filter.exactSearch),
-    CreateAndInitFromMixin(Auctionator.Search.CraftLevelMixin, browseResult, filter.craftLevel or {}),
+    CreateAndInitFromMixin(Auctionator.Search.Processors.ItemLevelMixin, testItem, filter.itemLevel or {}),
+    CreateAndInitFromMixin(Auctionator.Search.Processors.ExactMixin, testItem, filter.exactSearch),
+    CreateAndInitFromMixin(Auctionator.Search.Processors.CraftLevelMixin, testItem, filter.craftLevel or {}),
+    CreateAndInitFromMixin(Auctionator.Search.Processors.PriceMixin, testItem, filter.priceRange or {}),
   }
 end
 
@@ -149,7 +154,7 @@ function AuctionatorAdvancedSearchProviderMixin:ProcessSearchResults(addedResult
   Auctionator.Debug.Message("AuctionatorAdvancedSearchProviderMixin:ProcessSearchResults()")
   for index = 1, #addedResults do
     local testItem = CreateAndInitFromMixin(
-      Auctionator.Search.TestItemMixin,
+      Auctionator.Search.Processors.TestItemMixin,
       addedResults[index]
     )
     for _, p in ipairs(GetProcessors(testItem, self.currentFilter)) do

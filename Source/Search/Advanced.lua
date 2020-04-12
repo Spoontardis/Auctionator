@@ -6,7 +6,7 @@ end
 -- advanced search.
 function Auctionator.Search.SplitAdvancedSearch(searchString)
   local queryString, filterKey, minItemLevel, maxItemLevel, minLevel, maxLevel,
-    minCraftLevel, maxCraftLevel = strsplit( Auctionator.Constants.AdvancedSearchDivider, searchString )
+    minCraftLevel, maxCraftLevel, minPrice, maxPrice = strsplit( Auctionator.Constants.AdvancedSearchDivider, searchString )
 
   -- A nil queryString causes a disconnect if searched for, but an empty one
   -- doesn't
@@ -30,6 +30,21 @@ function Auctionator.Search.SplitAdvancedSearch(searchString)
     maxLevel = nil
   end
 
+  if minPrice ~= nil then
+    minPrice = minPrice * 100
+  end
+  if maxPrice ~= nil then
+    maxPrice = maxPrice * 100
+  end
+
+  if minPrice == 0 then
+    minPrice = nil
+  end
+
+  if maxPrice == 0 then
+    maxPrice = nil
+  end
+
   if minItemLevel == 0 then
     minItemLevel = nil
   end
@@ -51,6 +66,8 @@ function Auctionator.Search.SplitAdvancedSearch(searchString)
     filterKey = filterKey,
     minLevel = minLevel,
     maxLevel = maxLevel,
+    minPrice = minPrice,
+    maxPrice = maxPrice,
     minItemLevel = minItemLevel,
     maxItemLevel = maxItemLevel,
     minCraftLevel = minCraftLevel,
@@ -102,6 +119,26 @@ local function LevelRange(splitSearch)
   ) .. separator
 end
 
+local function PriceRange(splitSearch)
+  -- Convert to money strings
+  -- Some padding " " is necessary
+  local min = splitSearch.minPrice
+  if min ~= nil then
+    min = Auctionator.Utilities.CreateMoneyString(min) .. " ",
+  end
+
+  local max = splitSearch.maxPrice
+  if max ~= nil then
+    max = " " .. Auctionator.Utilities.CreateMoneyString(splitSearch.maxPrice) .. " "
+  end
+
+  return RangeOptionString(
+    "price",
+    min,
+    max
+  ) .. separator
+end
+
 function Auctionator.Search.PrettifySearchString(searchString)
   if Auctionator.Search.IsAdvancedSearch(searchString) then
     local splitSearch = Auctionator.Search.SplitAdvancedSearch(searchString)
@@ -109,6 +146,7 @@ function Auctionator.Search.PrettifySearchString(searchString)
     local result = splitSearch.queryString
       .. " ["
       .. FilterKey(splitSearch)
+      .. PriceRange(splitSearch)
       .. LevelRange(splitSearch)
       .. ItemLevelRange(splitSearch)
       .. CraftLevelRange(splitSearch)

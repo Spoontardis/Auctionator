@@ -1,6 +1,6 @@
-Auctionator.Search.CraftLevelMixin = CreateFromMixins(Auctionator.Search.FilterProcessorMixin)
+Auctionator.Search.Processors.CraftLevelMixin = CreateFromMixins(Auctionator.Search.Processors.ProcessorMixin)
 
-function Auctionator.Search.CraftLevelMixin:OnFilterEventReceived(eventName, itemID)
+function Auctionator.Search.Processors.CraftLevelMixin:OnFilterEventReceived(eventName, itemID)
   if (eventName == "EXTRA_BROWSE_INFO_RECEIVED" or
       eventName == "GET_ITEM_INFO_RECEIVED") and
      itemID == self.browseResult.itemKey.itemID then
@@ -8,7 +8,7 @@ function Auctionator.Search.CraftLevelMixin:OnFilterEventReceived(eventName, ite
   end
 end
 
-function Auctionator.Search.CraftLevelMixin:Update()
+function Auctionator.Search.Processors.CraftLevelMixin:Update()
   if not self:HasFilter() then
     return
   end
@@ -37,11 +37,11 @@ function Auctionator.Search.CraftLevelMixin:Update()
   end
 end
 
-function Auctionator.Search.CraftLevelMixin:IsComplete()
+function Auctionator.Search.Processors.CraftLevelMixin:IsComplete()
   return (not self:HasFilter()) or self.wrongItemType or (#self.itemInfo > 0 and self.extraInfo ~= nil)
 end
 
-function Auctionator.Search.CraftLevelMixin:LevelFilterSatisfied(craftLevel)
+function Auctionator.Search.Processors.CraftLevelMixin:LevelFilterSatisfied(craftLevel)
   return
     (
       --Minimum item level check
@@ -54,10 +54,10 @@ function Auctionator.Search.CraftLevelMixin:LevelFilterSatisfied(craftLevel)
     )
 end
 
-function Auctionator.Search.CraftLevelMixin:GetResult()
+function Auctionator.Search.Processors.CraftLevelMixin:GetResult()
   return not self:HasFilter() or
     (not self.wrongItemType and self:LevelFilterSatisfied(self.extraInfo))
 end
-function Auctionator.Search.CraftLevelMixin:HasFilter()
+function Auctionator.Search.Processors.CraftLevelMixin:HasFilter()
   return self.filter.min ~= nil or self.filter.max ~= nil
 end
