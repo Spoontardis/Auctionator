@@ -2,6 +2,28 @@ function Auctionator.Search.IsAdvancedSearch(searchString)
   return Auctionator.Utilities.StringContains(searchString, Auctionator.Constants.AdvancedSearchDivider);
 end
 
+-- Permits abbreviated prices.
+-- Default string (no modifiers) is in silver.
+-- Use suffix "g" for gold (x100 multiplier)
+--            "k" for x1k multiplier
+--            "m" for x1mil multiplier
+-- Multiple suffixes permitted.
+local function ParseMoneySegment(s)
+  if s ~= nil then
+    local result = string.gsub(s ,"k", "000")
+    result = string.gsub(result ,"g", "00")
+    result = string.gsub(result ,"m", "000000")
+
+    local num = tonumber(result)
+    if num == 0 then
+      return nil
+    elseif num ~= nil then
+      return num * 100
+    end
+  end
+  return nil
+end
+
 -- Extract components of an advanced search string. Assumes searchString is an
 -- advanced search.
 function Auctionator.Search.SplitAdvancedSearch(searchString)
@@ -22,27 +44,15 @@ function Auctionator.Search.SplitAdvancedSearch(searchString)
   minCraftLevel = tonumber( minCraftLevel )
   maxCraftLevel = tonumber( maxCraftLevel )
 
+  minPrice = ParseMoneySegment( minPrice )
+  maxPrice = ParseMoneySegment( maxPrice )
+
   if minLevel == 0 then
     minLevel = nil
   end
 
   if maxLevel == 0 then
     maxLevel = nil
-  end
-
-  if minPrice ~= nil then
-    minPrice = minPrice * 100
-  end
-  if maxPrice ~= nil then
-    maxPrice = maxPrice * 100
-  end
-
-  if minPrice == 0 then
-    minPrice = nil
-  end
-
-  if maxPrice == 0 then
-    maxPrice = nil
   end
 
   if minItemLevel == 0 then
