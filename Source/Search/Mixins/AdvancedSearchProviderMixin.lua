@@ -53,35 +53,6 @@ local function ParseAdvancedSearch(searchString)
   }
 end
 
-local function GetProcessors(testItem, filter)
-  return {
-    CreateAndInitFromMixin(Auctionator.Search.Processors.ItemLevelMixin, testItem, filter.itemLevel or {}),
-    CreateAndInitFromMixin(Auctionator.Search.Processors.ExactMixin, testItem, filter.exactSearch),
-    CreateAndInitFromMixin(Auctionator.Search.Processors.CraftLevelMixin, testItem, filter.craftLevel or {}),
-    CreateAndInitFromMixin(Auctionator.Search.Processors.PriceMixin, testItem, filter.priceRange or {}),
-  }
-end
-
-local function GetResults(allProcessors)
-  local results = {}
-  local offset = 0
-
-  for index = 1, #allProcessors do
-    local p = allProcessors[index - offset]
-    if p:IsComplete() then
-      p.testItem:MergeResult(p:GetResult())
-
-      if p.testItem:IsReady() and p.testItem.result then
-        table.insert(results, p.browseResult)
-      end
-
-      table.remove(allProcessors, index-offset)
-      offset = offset + 1
-    end
-  end
-
-  return results
-end
 
 function AuctionatorAdvancedSearchProviderMixin:CreateSearchTerm(term)
   Auctionator.Debug.Message("AuctionatorAdvancedSearchProviderMixin:CreateSearchTerm()", term)
@@ -146,7 +117,7 @@ function AuctionatorAdvancedSearchProviderMixin:ProcessorsEvents(eventName, ...)
     end
   end
 
-  local results = GetResults(self.allProcessors)
+  local results = Auctionator.Search.Processors.GetResultsAndUpdate(self.allProcessors)
   self:AddResults(results)
 end
 
@@ -157,12 +128,14 @@ function AuctionatorAdvancedSearchProviderMixin:ProcessSearchResults(addedResult
       Auctionator.Search.Processors.TestItemMixin,
       addedResults[index]
     )
-    for _, p in ipairs(GetProcessors(testItem, self.currentFilter)) do
+    for _, p in ipairs(
+        Auctionator.Search.Processors.Create(testItem, self.currentFilter)
+      ) do
       table.insert(self.allProcessors, p)
     end
   end
 
-  local results = GetResults(self.allProcessors)
+  local results = Auctionator.Search.Processors.GetResultsAndUpdate(self.allProcessors)
   self:AddResults(results)
 end
 

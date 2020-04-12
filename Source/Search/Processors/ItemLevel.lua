@@ -1,10 +1,6 @@
 Auctionator.Search.Processors.ItemLevelMixin = CreateFromMixins(Auctionator.Search.Processors.ProcessorMixin)
 
 
-function Auctionator.Search.Processors.ItemLevelMixin:IsComplete()
-  return true
-end
-
 local function HasItemLevel(itemKey)
   -- Check for 0 is to avoid filtering issues with glitchy AH APIs.
   return itemKey.itemLevel ~= nil and itemKey.itemLevel ~= 0

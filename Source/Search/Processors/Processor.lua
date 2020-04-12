@@ -18,8 +18,10 @@ end
 
 -- Derive
 function Auctionator.Search.Processors.ProcessorMixin:IsComplete()
+  return true
 end
 
 -- Derive
 function Auctionator.Search.Processors.ProcessorMixin:GetResult()
+  return true
 end

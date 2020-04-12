@@ -5,4 +5,5 @@
   <Script file="Price.lua"/>
   <Script file="Exact.lua"/>
   <Script file="CraftLevel.lua"/>
+  <Script file="Main.lua"/>
 </Ui>

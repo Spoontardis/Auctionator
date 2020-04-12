@@ -1,10 +1,6 @@
 Auctionator.Search.Processors.PriceMixin = CreateFromMixins(Auctionator.Search.Processors.ProcessorMixin)
 
 
-function Auctionator.Search.Processors.PriceMixin:IsComplete()
-  return true
-end
-
 function Auctionator.Search.Processors.PriceMixin:PriceRangeSatisfied(browseResult)
   return
     (

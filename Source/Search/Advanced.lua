@@ -124,7 +124,7 @@ local function PriceRange(splitSearch)
   -- Some padding " " is necessary
   local min = splitSearch.minPrice
   if min ~= nil then
-    min = Auctionator.Utilities.CreateMoneyString(min) .. " ",
+    min = Auctionator.Utilities.CreateMoneyString(min) .. " "
   end
 
   local max = splitSearch.maxPrice
