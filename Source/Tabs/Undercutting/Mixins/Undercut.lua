@@ -8,20 +8,19 @@ local UNDERCUT_EVENTS = {
   "AUCTION_CANCELED",
 }
 
-MAGIC_BUTTON_L_UNDERCUT_LOADED = "Auction cancelling loaded. Click once more please :)"
-MAGIC_BUTTON_L_NOT_FIRST = "You aren't first. Click again to cancel %s"
-MAGIC_BUTTON_L_OWNED_TOP = "You own the top auction for %s. Skipping"
-MAGIC_BUTTON_L_SEARCH_RESTART = "Click again to restart undercut search"
+AUC_MAGIC_BUTTON_L_UNDERCUT_LOADED = "Auction cancelling loaded. Click once more please :)"
+AUC_MAGIC_BUTTON_L_NOT_FIRST = "You aren't first. Click again to cancel %s"
+AUC_MAGIC_BUTTON_L_OWNED_TOP = "You own the top auction for %s. Skipping"
+AUC_MAGIC_BUTTON_L_SEARCH_RESTART = "Click again to restart undercut search"
 
 function AuctionatorMagicButtonUndercutFrameMixin:OnLoad()
   self:Reset()
-  Auctionator.Utilities.Message(MAGIC_BUTTON_L_UNDERCUT_LOADED)
+  Auctionator.Utilities.Message(AUC_MAGIC_BUTTON_L_UNDERCUT_LOADED)
   FrameUtil.RegisterFrameForEvents(self, UNDERCUT_EVENTS)
   C_AuctionHouse.QueryOwnedAuctions({})
 end
 
 function AuctionatorMagicButtonUndercutFrameMixin:OnEvent(event, ...)
-  print(event)
   if event == "AUCTION_HOUSE_SHOW" or 
      not self:AuctionsTabShown() then
     self:Reset()
@@ -30,7 +29,7 @@ function AuctionatorMagicButtonUndercutFrameMixin:OnEvent(event, ...)
     self:UpdateCurrentAuction()
 
   elseif event == "AUCTION_CANCELED" then
-    Auctionator.Utilities.Message(MAGIC_BUTTON_L_SEARCH_RESTART)
+    Auctionator.Utilities.Message(AUC_MAGIC_BUTTON_L_SEARCH_RESTART)
 
   elseif self.currentAuction and self.currentAuction.status == 1 then
     self:SkipAuction()
@@ -58,15 +57,16 @@ function AuctionatorMagicButtonUndercutFrameMixin:ProcessSearchResults(...)
 
   if resultInfo.owners[1] ~= "player" then
     self.isUndercut = true
-    Auctionator.Utilities.Message(MAGIC_BUTTON_L_NOT_FIRST:format(itemKeyInfo.itemName))
+    Auctionator.Utilities.Message(AUC_MAGIC_BUTTON_L_NOT_FIRST:format(itemKeyInfo.itemName))
   else
-    Auctionator.Utilities.Message(MAGIC_BUTTON_L_OWNED_TOP:format(itemKeyInfo.itemName))
+    Auctionator.Utilities.Message(AUC_MAGIC_BUTTON_L_OWNED_TOP:format(itemKeyInfo.itemName))
     self:SkipAuction()
   end
 end
 
 function AuctionatorMagicButtonUndercutFrameMixin:AuctionsTabShown()
-  return AuctionHouseFrame.displayMode == AuctionHouseFrameDisplayMode.Auctions
+  return true
+  --return AuctionHouseFrame.displayMode == AuctionHouseFrameDisplayMode.Auctions
 end
 
 function AuctionatorMagicButtonUndercutFrameMixin:ButtonPress()
@@ -84,7 +84,6 @@ end
 function AuctionatorMagicButtonUndercutFrameMixin:SearchForUndercuts()
   self.isUndercut = false
   if self.currentAuction then
-    print("search")
     self.searchWaiting = true
     C_AuctionHouse.SendSearchQuery(self.currentAuction.itemKey, {{sortOrder = 4, reverseSort = false}}, true)
   end
@@ -98,7 +97,6 @@ end
 function AuctionatorMagicButtonUndercutFrameMixin:UpdateCurrentAuction()
   self.isUndercut = false
   self.currentAuction = C_AuctionHouse.GetOwnedAuctionInfo(self.auctionIndex)
-  print(self.currentAuction)
   if not self.currentAuction then
     Auctionator.Utilities.Message("No more to cancel")
     self:Reset()
