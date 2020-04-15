@@ -14,4 +14,14 @@ end
 function AuctionatorMagicButton:OnClick()
   Auctionator.Debug.Message("AuctionatorMagicButton:OnClick()")
 
+  if not AuctionatorMagicButtonUndercutFrame then
+    frame = CreateFrame(
+      "FRAME",
+      "AuctionatorMagicButtonUndercutFrame",
+      nil,
+      "AuctionatorMagicButtonUndercutFrameTemplate"
+    )
+  else
+    AuctionatorMagicButtonUndercutFrame:ButtonPress()
+  end
 end
